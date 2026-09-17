@@ -28,3 +28,8 @@ export function hueShadow(color: number): number {
   const [r, g, b] = rgb(color);
   return (Math.floor(r * 0.55) << 16) | (Math.floor(g * 0.38) << 8) | Math.min(255, Math.floor(b * 0.7) + 28);
 }
+
+export function css(color: number, alpha = 1): string {
+  const [r, g, b] = rgb(color);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

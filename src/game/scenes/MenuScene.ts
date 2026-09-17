@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { ensureArt } from "../art/createSprites";
 import { startSound, unlockAudio } from "../audio/sfx";
 import { paintStreet } from "../world/street";
+import { WORLD_H } from "../constants";
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -11,32 +12,38 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     ensureArt(this);
     paintStreet(this);
-    this.cameras.main.setZoom(0.55);
-    this.cameras.main.centerOn(900, 720);
+    const cx = 820;
+    const cy = WORLD_H * 0.62;
+    this.cameras.main.setZoom(0.9);
+    this.cameras.main.centerOn(cx, cy);
 
-    const { width, height } = this.scale;
-    const cat = this.add.sprite(width / 2, height * 0.38, "px-cat-0").setScrollFactor(0).setScale(3.2);
+    this.add.rectangle(cx, cy + 80, 1600, 520, 0x08040a, 0.18).setDepth(2000);
+    const cat = this.add.sprite(cx, cy - 70, "px-cat-0").setScale(2.4).setDepth(3000);
+    cat.play("cat-walk");
+
     this.add
-      .text(width / 2, height * 0.58, "夜市猫", {
+      .text(cx, cy + 70, "夜市猫", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "82px",
+        fontSize: "84px",
         color: "#ffe7c2",
         stroke: "#8b3a1e",
-        strokeThickness: 8,
+        strokeThickness: 10,
       })
       .setOrigin(0.5)
-      .setScrollFactor(0);
+      .setDepth(3000);
 
     const hint = this.add
-      .text(width / 2, height * 0.78, "点一下，走进夜市", {
+      .text(cx, cy + 160, "点一下，去偷今晚三口", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
         fontSize: "26px",
         color: "#fff3dd",
+        stroke: "#1a0c10",
+        strokeThickness: 5,
       })
       .setOrigin(0.5)
-      .setScrollFactor(0);
+      .setDepth(3000);
 
-    this.tweens.add({ targets: [cat, hint], y: "+=7", yoyo: true, duration: 900, repeat: -1, ease: "sine.inOut" });
+    this.tweens.add({ targets: hint, alpha: 0.4, yoyo: true, duration: 800, repeat: -1 });
     this.input.once("pointerdown", () => {
       unlockAudio();
       startSound();

@@ -71,7 +71,7 @@ export class Cat extends Phaser.GameObjects.Sprite {
   }
 
   private refreshScale(): void {
-    this.setScale((this.radius * 2) / 22);
+    this.setScale((this.radius * 2) / 38);
   }
 
   private setMoving(moving: boolean): void {
