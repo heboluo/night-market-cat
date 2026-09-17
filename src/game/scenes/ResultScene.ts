@@ -3,7 +3,7 @@ import { ensureArt } from "../art/createSprites";
 import { startSound, unlockAudio } from "../audio/sfx";
 import { formatRank, type RoundResult } from "../types";
 import { paintStreet } from "../world/street";
-import { WORLD_H } from "../constants";
+import { STREET_Y } from "../constants";
 
 export class ResultScene extends Phaser.Scene {
   private result!: RoundResult;
@@ -19,59 +19,52 @@ export class ResultScene extends Phaser.Scene {
   create(): void {
     ensureArt(this);
     paintStreet(this);
-    const cx = 1100;
-    const cy = WORLD_H * 0.62;
-    this.cameras.main.setZoom(0.86);
-    this.cameras.main.centerOn(cx, cy);
-    this.add.rectangle(cx, cy, 1600, 900, 0x0a0610, 0.42).setDepth(2000);
-
-    this.add.sprite(cx, cy - 210, "px-cat-0").setScale(2.3).setDepth(3000);
+    this.cameras.main.centerOn(960, STREET_Y - 20);
+    const cx = 960;
+    const cy = 150;
+    this.add.rectangle(cx, cy + 20, 420, 280, 0x0a0610, 0.55).setDepth(2000);
+    this.add.sprite(cx, cy - 70, "cat-chonk-0").setScale(3).setDepth(3000);
 
     const title =
-      this.result.reason === "king"
-        ? "牌坊进肚了"
-        : this.result.reason === "win"
-          ? "今晚吃饱了"
-          : "被摊主抓住了";
+      this.result.reason === "king" ? "牌坊进肚了" : this.result.reason === "win" ? "今晚吃饱了" : "被摊主抓住了";
 
     this.add
-      .text(cx, cy - 80, title, {
+      .text(cx, cy - 18, title, {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "48px",
+        fontSize: "18px",
         color: "#ffe7c2",
         stroke: "#8b3a1e",
-        strokeThickness: 6,
+        strokeThickness: 4,
       })
       .setOrigin(0.5)
       .setDepth(3000);
 
     const lines = [
       `评价：${formatRank(this.result)}`,
-      `清单 ${this.result.completed}/3    ${this.result.courses.join(" → ")}`,
-      `今晚吞下 ${this.result.eaten} 样`,
-      `最大的一口：${this.result.biggestName}`,
+      `清单 ${this.result.completed}/3  ${this.result.courses.join(" → ")}`,
+      `今晚吞下 ${this.result.eaten} 样 · ${this.result.biggestName}`,
     ];
 
     this.add
-      .text(cx, cy + 50, lines.join("\n"), {
+      .text(cx, cy + 40, lines.join("\n"), {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "22px",
+        fontSize: "11px",
         color: "#ffd7a0",
         align: "center",
-        lineSpacing: 12,
+        lineSpacing: 6,
         stroke: "#1a0c10",
-        strokeThickness: 4,
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(3000);
 
     this.add
-      .text(cx, cy + 200, "再来一局", {
+      .text(cx, cy + 100, "再来一局", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "26px",
+        fontSize: "13px",
         color: "#fff3dd",
         stroke: "#1a0c10",
-        strokeThickness: 5,
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(3000);

@@ -18,31 +18,41 @@ export class Edible extends Phaser.GameObjects.Container {
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly glow?: Phaser.GameObjects.Image;
   private readonly lamp?: Phaser.GameObjects.Image;
+  private readonly bang?: Phaser.GameObjects.Image;
+  private readonly mark: Phaser.GameObjects.Image;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, def: ItemDef, radius: number, phase = 0) {
+  constructor(scene: Phaser.Scene, x: number, y: number, def: ItemDef, radius: number, phase = 0, startWatching = false) {
     super(scene, x, y);
     this.def = def;
     this.radius = radius;
     this.phase = phase;
-    this.lookT = phase;
+    this.lookT = 0;
+    this.watching = startWatching;
     const key = ensureItemTexture(scene, def);
-    if (def.shape === "lantern" || def.tier === "stall" || def.tier === "snack") {
-      this.glow = scene.add.image(0, 16, "px-glow");
-      this.glow.setAlpha(def.tier === "stall" ? 0.28 : def.tier === "snack" ? 0.16 : 0.4);
-      this.glow.setScale((radius * 2.4) / 32);
+    if (def.tier === "snack" || def.tier === "stall") {
+      this.glow = scene.add.image(0, 6, "px-glow");
+      this.glow.setAlpha(def.tier === "stall" ? 0.2 : 0.22);
+      this.glow.setScale((radius * 2) / 14);
       this.add(this.glow);
     }
     this.sprite = scene.add.image(0, 0, key);
-    this.sprite.setScale((radius * 2) / 78);
+    this.sprite.setScale((radius * 2) / 16);
     this.add(this.sprite);
     if (def.tier === "stall") {
-      this.lamp = scene.add.image(radius * 0.08, -radius * 0.78, "px-lamp");
-      this.lamp.setScale(1.35);
+      this.lamp = scene.add.image(0, -radius - 6, "px-lamp");
+      this.lamp.setScale(2);
       this.add(this.lamp);
-      this.watching = false;
+      this.bang = scene.add.image(12, -radius - 16, "px-bang");
+      this.bang.setVisible(startWatching);
+      this.add(this.bang);
     }
+    this.mark = scene.add.image(0, -radius - 8, "px-yes");
+    this.mark.setVisible(false);
+    this.mark.setScale(1.2);
+    this.add(this.mark);
     scene.add.existing(this);
-    this.setDepth(def.tier === "landmark" ? 40 : 100 + Math.floor(y * 0.1 + radius));
+    this.setDepth(def.tier === "landmark" ? 40 : 100 + Math.floor(y + radius));
+    this.refreshLamp();
   }
 
   get area(): number {
@@ -50,24 +60,35 @@ export class Edible extends Phaser.GameObjects.Container {
   }
 
   markStarter(): void {
-    this.glow?.setAlpha(0.55);
-    this.glow?.setScale((this.radius * 3.4) / 32);
+    this.glow?.setAlpha(0.7);
+    this.glow?.setScale((this.radius * 2) / 10);
+  }
+
+  showMark(kind: "yes" | "no" | "none"): void {
+    if (kind === "none") {
+      this.mark.setVisible(false);
+      return;
+    }
+    this.mark.setTexture(kind === "yes" ? "px-yes" : "px-no");
+    this.mark.setVisible(true);
   }
 
   watch(dt: number): void {
     if (this.def.tier !== "stall" || this.eaten) return;
     this.lookT += dt;
-    const green = Math.max(1.05, 2.5 - this.tension * 0.55);
-    const red = 0.95 + this.tension * 0.42;
+    const green = Math.max(1.2, 2.6 - this.tension * 0.5);
+    const red = 1.1 + this.tension * 0.35;
     const span = this.watching ? red : green;
     if (this.lookT >= span) {
       this.lookT = 0;
       this.watching = !this.watching;
     }
-    const color = this.watching ? 0xff5a5a : 0x6dff8c;
-    this.lamp?.setTint(color);
-    this.lamp?.setScale(this.watching ? 1.55 : 1.25 + Math.sin(this.lookT * 6) * 0.12);
-    this.sprite.setTint(this.watching ? 0xffd0d0 : 0xffffff);
+    this.refreshLamp();
+  }
+
+  private refreshLamp(): void {
+    this.lamp?.setTint(this.watching ? 0xff5a5a : 0x63e38a);
+    this.bang?.setVisible(this.watching);
   }
 
   wander(dt: number): void {
@@ -75,15 +96,15 @@ export class Edible extends Phaser.GameObjects.Container {
     if (this.vx !== 0 || this.vy !== 0) {
       this.x += this.vx * dt;
       this.y += this.vy * dt;
-      if (this.x < 90 || this.x > WORLD_W - 90) this.vx *= -1;
-      if (this.y < 520 || this.y > WORLD_H - 90) this.vy *= -1;
+      if (this.x < 40 || this.x > WORLD_W - 40) this.vx *= -1;
+      if (this.y < 160 || this.y > WORLD_H - 24) this.vy *= -1;
       this.sprite.setFlipX(this.vx < 0);
       return;
     }
     if (this.def.tier !== "snack") return;
     this.drift += dt;
-    this.x += Math.cos(this.drift * 0.7 + this.phase) * 8 * dt;
-    this.y += Math.sin(this.drift * 0.9 + this.phase) * 6 * dt;
-    if (this.glow) this.glow.setAlpha(0.18 + Math.sin(this.drift * 3) * 0.1);
+    this.x += Math.cos(this.drift * 0.7 + this.phase) * 5 * dt;
+    this.y += Math.sin(this.drift * 0.9 + this.phase) * 4 * dt;
+    if (this.glow) this.glow.setAlpha(0.2 + Math.sin(this.drift * 4) * 0.12);
   }
 }

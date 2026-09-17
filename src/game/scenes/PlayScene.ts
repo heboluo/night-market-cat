@@ -27,7 +27,6 @@ export class PlayScene extends Phaser.Scene {
   private pings: Phaser.GameObjects.Image[] = [];
   private pingT = 0;
   private courseIcons: Phaser.GameObjects.Image[] = [];
-  private teachUntil = 8;
 
   constructor() {
     super("play");
@@ -37,105 +36,84 @@ export class PlayScene extends Phaser.Scene {
     ensureArt(this);
     paintStreet(this);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
-    this.cameras.main.fadeIn(450, 12, 8, 18);
+    this.cameras.main.setZoom(1);
+    this.cameras.main.fadeIn(280, 12, 8, 18);
 
     const rng = new Phaser.Math.RandomDataGenerator();
     this.list = new NightList(rng);
     this.items = spawnMarket(this, rng, this.list.courses);
-    this.cat = new Cat(this, 250, STREET_Y);
+    this.cat = new Cat(this, 170, STREET_Y);
 
     this.crumbs = this.add.particles(0, 0, "px-crumb", {
-      lifespan: 560,
-      speed: { min: 50, max: 170 },
-      scale: { start: 1.6, end: 0 },
+      lifespan: 420,
+      speed: { min: 30, max: 90 },
+      scale: { start: 1.2, end: 0 },
       alpha: { start: 1, end: 0 },
       emitting: false,
-      quantity: 12,
+      quantity: 8,
     });
     this.crumbs.setDepth(3000);
-    this.spawnSteam();
 
     const kb = this.input.keyboard;
     this.keys = kb ? (kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT") as Record<string, Phaser.Input.Keyboard.Key>) : {};
 
     this.buildHud();
-    this.cameras.main.startFollow(this.cat, true, 0.14, 0.14);
-    this.cameras.main.setFollowOffset(0, 56);
-    this.cameras.main.setZoom(1.05);
+    this.cameras.main.startFollow(this.cat, true, 0.16, 0.16);
     this.hudCam = this.cameras.add(0, 0, this.scale.width, this.scale.height);
     this.hudCam.setScroll(0, 0);
     this.hudCam.transparent = true;
     this.bindCameras();
     this.scale.on("resize", (gameSize: Phaser.Structs.Size) => this.hudCam.setSize(gameSize.width, gameSize.height));
     this.updateHud();
-    this.updateZoom();
   }
 
   update(_time: number, delta: number): void {
     const dt = Math.min(delta, 40) / 1000;
     this.hurtWait = Math.max(0, this.hurtWait - dt);
-    this.teachUntil = Math.max(0, this.teachUntil - dt);
     this.pingT += dt;
     this.readMove(dt);
-    this.cat.x = Phaser.Math.Clamp(this.cat.x, 70, WORLD_W - 70);
-    this.cat.y = Phaser.Math.Clamp(this.cat.y, STREET_Y - 70, STREET_Y + 160);
+    this.cat.x = Phaser.Math.Clamp(this.cat.x, 40, WORLD_W - 40);
+    this.cat.y = Phaser.Math.Clamp(this.cat.y, STREET_Y - 40, STREET_Y + 50);
     for (const item of this.items) item.tension = this.list.completed;
     this.spawnHunterIfNeeded();
     this.sweeper?.chase(this.cat, dt);
     this.resolveEats(dt);
     this.resolveSweeper();
     this.refreshPings();
-    this.updateZoom();
     this.updateHud();
-  }
-
-  private spawnSteam(): void {
-    for (const item of this.items) {
-      if (item.def.tier !== "stall") continue;
-      const steam = this.add.particles(item.x, item.y - item.radius * 0.45, "px-steam", {
-        lifespan: 1600,
-        speedY: { min: -36, max: -12 },
-        speedX: { min: -10, max: 10 },
-        scale: { start: 0.5, end: 1.6 },
-        alpha: { start: 0.28, end: 0 },
-        frequency: 260,
-        quantity: 1,
-      });
-      steam.setDepth(90);
-    }
   }
 
   private buildHud(): void {
     const { width, height } = this.scale;
     const panel = this.add.graphics().setScrollFactor(0).setDepth(4990);
-    panel.fillStyle(0x12080c, 0.58);
-    panel.fillRoundedRect(width / 2 - 150, 10, 300, 72, 18);
-    panel.fillRoundedRect(width - 132, 14, 116, 40, 12);
+    panel.fillStyle(0x12080c, 0.72);
+    panel.fillRect(width / 2 - 78, 6, 156, 36);
+    panel.fillRect(width - 70, 8, 62, 20);
     this.list.courses.forEach((course, i) => {
-      const icon = this.add.image(width / 2 - 72 + i * 72, 46, ensureItemTexture(this, course));
-      icon.setScrollFactor(0).setDepth(5000).setScale(0.72);
+      const icon = this.add.image(width / 2 - 40 + i * 40, 24, ensureItemTexture(this, course));
+      icon.setScrollFactor(0).setDepth(5000).setScale(1);
       this.courseIcons.push(icon);
     });
     this.stars = this.add
-      .text(width - 28, 20, "", {
+      .text(width - 12, 10, "", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "22px",
+        fontSize: "12px",
         color: "#ffb3b3",
         stroke: "#1a0c10",
-        strokeThickness: 5,
+        strokeThickness: 3,
       })
       .setOrigin(1, 0)
       .setScrollFactor(0)
       .setDepth(5000);
     this.coach = this.add
-      .text(width / 2, height - 52, "", {
+      .text(width / 2, height - 10, "", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "24px",
+        fontSize: "14px",
         color: "#ffe7c2",
         backgroundColor: "#12080c",
-        padding: { x: 16, y: 8 },
+        padding: { x: 8, y: 4 },
         stroke: "#1a0c10",
-        strokeThickness: 4,
+        strokeThickness: 2,
       })
       .setOrigin(0.5, 1)
       .setScrollFactor(0)
@@ -164,11 +142,15 @@ export class PlayScene extends Phaser.Scene {
     return undefined;
   }
 
+  private currentTarget(): Edible | undefined {
+    return this.items.find((item) => !item.eaten && this.list.isTarget(item.def));
+  }
+
   private spawnHunterIfNeeded(): void {
     if (this.sweeper || this.list.alert < 2) return;
-    this.sweeper = new Sweeper(this, this.cat.x > WORLD_W / 2 ? 80 : WORLD_W - 80, this.cat.y);
+    this.sweeper = new Sweeper(this, this.cat.x > WORLD_W / 2 ? 40 : WORLD_W - 40, this.cat.y);
     this.hudCam.ignore(this.sweeper);
-    this.cameras.main.flash(180, 180, 40, 40);
+    this.cameras.main.flash(160, 180, 40, 40);
     warnSound();
   }
 
@@ -183,7 +165,7 @@ export class PlayScene extends Phaser.Scene {
       this.sweeper.destroy();
       this.sweeper = undefined;
       this.list.alert = Math.max(0, this.list.alert - 1);
-      eatSound(80);
+      eatSound(40);
       return;
     }
     if (this.list.alert >= MAX_ALERT) {
@@ -192,7 +174,7 @@ export class PlayScene extends Phaser.Scene {
     }
     if (this.hurtWait > 0) return;
     const inv = dist === 0 ? 1 : 1 / dist;
-    this.cat.bounceFrom(-dx * inv, -dy * inv, 46);
+    this.cat.bounceFrom(-dx * inv, -dy * inv, 28);
     this.list.raise(1);
     this.hurtWait = HURT_COOLDOWN;
     hurtSound();
@@ -205,11 +187,11 @@ export class PlayScene extends Phaser.Scene {
       const dx = item.x - this.cat.x;
       const dy = item.y - this.cat.y;
       const dist = Math.hypot(dx, dy);
-      if (dist > this.cat.radius + item.radius * 0.16) continue;
+      if (dist > this.cat.radius + item.radius * 0.2) continue;
       if (this.cat.radius > item.radius * EAT_RATIO) this.trySwallow(item);
-      else if (item.radius > this.cat.radius * 1.08) {
+      else if (item.radius > this.cat.radius * 1.05) {
         const inv = dist === 0 ? 1 : 1 / dist;
-        this.cat.bounceFrom(-dx * inv, -dy * inv, 26);
+        this.cat.bounceFrom(-dx * inv, -dy * inv, 16);
       }
     }
   }
@@ -221,11 +203,10 @@ export class PlayScene extends Phaser.Scene {
       const dx = item.x - this.cat.x;
       const dy = item.y - this.cat.y;
       const dist = Math.hypot(dx, dy) || 1;
-      this.cat.bounceFrom(-dx / dist, -dy / dist, 38);
+      this.cat.bounceFrom(-dx / dist, -dy / dist, 22);
       this.list.raise(1);
       this.hurtWait = HURT_COOLDOWN;
-      this.flash("被看见了");
-      this.teachUntil = 3;
+      this.flash("红灯！等一等");
       hurtSound();
       return;
     }
@@ -234,9 +215,9 @@ export class PlayScene extends Phaser.Scene {
     const target = this.list.isTarget(item.def);
     const keep = target ? CRAVING_GROWTH : item.def.tier === "snack" ? GROWTH_KEEP : GROWTH_KEEP * 0.7;
     this.cat.growBy(item.area * keep, item.def.name, item.radius, item.def.tier === "landmark");
-    this.crumbs.emitParticleAt(item.x, item.y, 14);
-    this.cameras.main.shake(70, 0.005);
-    this.tweens.add({ targets: item, scale: 0, alpha: 0, duration: 160, onComplete: () => item.destroy() });
+    this.crumbs.emitParticleAt(item.x, item.y, 8);
+    this.cameras.main.shake(60, 0.004);
+    this.tweens.add({ targets: item, scale: 0, alpha: 0, duration: 140, onComplete: () => item.destroy() });
 
     if (item.def.tier === "landmark") {
       this.finish("king");
@@ -254,52 +235,57 @@ export class PlayScene extends Phaser.Scene {
 
   private flash(text: string): void {
     const label = this.add
-      .text(this.cat.x, this.cat.y - this.cat.radius - 22, text, {
+      .text(this.cat.x, this.cat.y - this.cat.radius - 12, text, {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "24px",
+        fontSize: "12px",
         color: "#ffe7c2",
         stroke: "#1a0c10",
-        strokeThickness: 6,
+        strokeThickness: 4,
       })
       .setOrigin(0.5)
       .setDepth(4000);
     this.hudCam.ignore(label);
-    this.tweens.add({ targets: label, y: label.y - 36, alpha: 0, duration: 720, onComplete: () => label.destroy() });
+    this.tweens.add({ targets: label, y: label.y - 18, alpha: 0, duration: 640, onComplete: () => label.destroy() });
   }
 
   private refreshPings(): void {
-    const name = this.list.current?.name;
-    const live = this.items.filter((item) => !item.eaten && item.def.name === name);
+    const live = this.items.filter((item) => !item.eaten && this.list.isTarget(item.def));
     while (this.pings.length < live.length) {
-      const ping = this.add.image(0, 0, "px-ping").setDepth(2500).setScale(1.15);
+      const ping = this.add.image(0, 0, "px-ping").setDepth(2500).setScale(1.6);
       this.hudCam.ignore(ping);
       this.pings.push(ping);
     }
     this.pings.forEach((ping, i) => {
       const item = live[i];
       ping.setVisible(!!item);
-      if (item) ping.setPosition(item.x, item.y - item.radius - 20 + Math.sin(this.pingT * 6) * 6);
+      if (item) ping.setPosition(item.x, item.y - item.radius - 12 + Math.sin(this.pingT * 6) * 3);
     });
-  }
-
-  private updateZoom(): void {
-    const zoom = Phaser.Math.Clamp(96 / this.cat.radius, 0.62, 1.18);
-    this.cameras.main.setZoom(Phaser.Math.Linear(this.cameras.main.zoom, zoom, 0.08));
+    for (const item of this.items) {
+      if (item.eaten) continue;
+      if (!this.list.isTarget(item.def)) {
+        item.showMark("none");
+        continue;
+      }
+      const guard = this.guardOf(item);
+      item.showMark(guard?.watching ? "no" : "yes");
+    }
   }
 
   private updateHud(): void {
     this.courseIcons.forEach((icon, i) => {
-      icon.setAlpha(i < this.list.index ? 0.3 : 1);
-      icon.setScale(i === this.list.index ? 0.82 + Math.sin(this.pingT * 5) * 0.08 : 0.64);
+      icon.setAlpha(i < this.list.index ? 0.28 : 1);
+      icon.setScale(i === this.list.index ? 1.15 : 0.9);
     });
     this.stars.setText(alertStars(this.list.alert));
-    let line = "";
-    if (this.cat.eaten === 0) line = "走进光里，先吃一口垫垫肚子";
-    else if (this.list.completed === 0) line = "盯着摊灯：绿灯再偷箭头";
-    else if (this.sweeper) line = "摊主追来了，绕开或者反吃";
-    else if (this.teachUntil > 0) line = `再偷 ${3 - this.list.completed} 口，灯越来越快`;
+    const target = this.currentTarget();
+    const dist = target ? Math.hypot(target.x - this.cat.x, target.y - this.cat.y) : 999;
+    const guard = target ? this.guardOf(target) : undefined;
+    let line = "跟着箭头走，看摊上的灯";
+    if (this.cat.eaten === 0) line = "WASD：先吃发光的小鱼丸";
+    else if (this.sweeper) line = "摊主追来了，躲开";
+    else if (target && dist < 90 && guard?.watching) line = "红灯！摊主在看，先等";
+    else if (target && dist < 90 && !guard?.watching) line = "绿灯！现在偷";
     this.coach.setText(line);
-    this.coach.setAlpha(line ? 1 : 0);
   }
 
   private finish(reason: EndReason): void {

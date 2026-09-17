@@ -10,12 +10,12 @@ export class Cat extends Phaser.GameObjects.Sprite {
   private moving = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, "px-cat-0");
+    super(scene, x, y, "cat-chonk-0");
     scene.add.existing(this);
     this.setDepth(2000);
-    this.setOrigin(0.5, 0.72);
+    this.setOrigin(0.5, 0.92);
     this.anims.stop();
-    this.setTexture("px-cat-0");
+    this.setTexture("cat-chonk-0");
     this.refreshScale();
   }
 
@@ -49,7 +49,7 @@ export class Cat extends Phaser.GameObjects.Sprite {
     const len = Math.hypot(ix, iy) || 1;
     const nx = ix / len;
     const ny = iy / len;
-    const speed = Phaser.Math.Clamp(280 - this.radius * 0.35, 150, 280);
+    const speed = Phaser.Math.Clamp(140 - this.radius * 0.4, 90, 140);
     this.x += nx * speed * dt;
     this.y += ny * speed * dt;
     this.setFlipX(nx < 0);
@@ -71,19 +71,19 @@ export class Cat extends Phaser.GameObjects.Sprite {
   }
 
   private refreshScale(): void {
-    this.setScale((this.radius * 2) / 38);
+    this.setScale((this.radius * 2) / 14);
   }
 
   private setMoving(moving: boolean): void {
     if (this.moving === moving) {
-      if (!moving) this.setTexture("px-cat-0");
+      if (!moving) this.setTexture("cat-chonk-0");
       return;
     }
     this.moving = moving;
     if (moving) this.play("cat-walk", true);
     else {
       this.anims.stop();
-      this.setTexture("px-cat-0");
+      this.setTexture("cat-chonk-0");
     }
   }
 }

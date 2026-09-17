@@ -7,11 +7,13 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "app",
   backgroundColor: "#140c18",
+  pixelArt: false,
+  roundPixels: false,
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1280,
-    height: 720,
+    width: 640,
+    height: 360,
   },
   render: {
     antialias: true,

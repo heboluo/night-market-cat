@@ -1,164 +1,282 @@
 import Phaser from "phaser";
 import type { ItemDef } from "../data/catalog";
-import { CREAM, GOLD, INK, ORANGE, ORANGE_HI, PINK, WHITE } from "./palette";
-import { css } from "./palette";
-import { disc, ellipse, glow, paintCanvas, roundRect } from "./canvas";
-import { paintItem } from "./paintItems";
+import {
+  CREAM,
+  GOLD,
+  INK,
+  NIGHT,
+  ORANGE,
+  ORANGE_HI,
+  ORANGE_SH,
+  PINK,
+  ROAD,
+  STONE,
+  STONE_HI,
+  WHITE,
+  WOOD,
+  WOOD_HI,
+  hueShadow,
+  lighten,
+} from "./palette";
+import { paintMap, paintTexture, type PixelPlotter } from "./pixel";
+
+const CAT: Record<string, number | undefined> = {
+  k: INK,
+  o: ORANGE,
+  O: ORANGE_HI,
+  d: ORANGE_SH,
+  c: CREAM,
+  p: PINK,
+  e: WHITE,
+  b: INK,
+  s: WHITE,
+  n: 0xe07070,
+  t: 0xd4783a,
+};
+
+const CAT_IDLE = [
+  "........................",
+  "......kk......kk........",
+  ".....ko.k....k.ok.......",
+  ".....kppk....kppk.......",
+  "....kOooooooooooOk......",
+  "...kOooooooooooooOk.....",
+  "...kOo.ee....ee.oOk.....",
+  "...kOo.kb....bk.oOk.....",
+  "...kOooooooooooooOk.....",
+  "...kOooo..nn..oooOk.....",
+  "....kOoccccccccoOk......",
+  "....kkooooooooookk......",
+  ".....koddddddddok.......",
+  "......k........k........",
+  "......kk......kk........",
+  ".......t......t.........",
+];
+
+const CAT_STEP = [
+  "........................",
+  "......kk......kk........",
+  ".....ko.k....k.ok.......",
+  ".....kppk....kppk.......",
+  "....kOooooooooooOk......",
+  "...kOooooooooooooOk.....",
+  "...kOo.ee....ee.oOk.....",
+  "...kOo.kb....bk.oOk.....",
+  "...kOooooooooooooOk.....",
+  "...kOooo..nn..oooOk.....",
+  "....kOoccccccccoOk......",
+  "....kkooooooooookk......",
+  ".....koddddddddok.......",
+  ".....k..........k.......",
+  "....kk..........kk......",
+  "....t............t......",
+];
 
 export function ensureArt(scene: Phaser.Scene): void {
-  paintCat(scene, "px-cat-0", 0);
-  paintCat(scene, "px-cat-1", 1);
+  paintMap(scene, "cat-chonk-0", CAT_IDLE, CAT);
+  paintMap(scene, "cat-chonk-1", CAT_STEP, CAT);
+  paintTiles(scene);
   paintSweeper(scene);
   paintGlow(scene);
   paintCrumb(scene);
   paintPing(scene);
-  paintSteam(scene);
   paintLamp(scene);
+  paintMarks(scene);
 
   if (!scene.anims.exists("cat-walk")) {
     scene.anims.create({
       key: "cat-walk",
-      frames: [{ key: "px-cat-0" }, { key: "px-cat-1" }],
-      frameRate: 10,
+      frames: [{ key: "cat-chonk-0" }, { key: "cat-chonk-1" }],
+      frameRate: 8,
       repeat: -1,
     });
   }
 }
 
 export function itemTextureKey(def: ItemDef): string {
-  return `item-${def.name}`;
+  return `pix-item-${def.name}`;
 }
 
 export function ensureItemTexture(scene: Phaser.Scene, def: ItemDef): string {
   const key = itemTextureKey(def);
-  paintCanvas(scene, key, 128, 128, (ctx) => paintItem(ctx, def));
+  if (scene.textures.exists(key)) return key;
+  paintTexture(scene, key, 32, 32, (p) => drawItem(p, def));
   return key;
 }
 
-function paintCat(scene: Phaser.Scene, key: string, frame: number): void {
-  paintCanvas(scene, key, 80, 80, (ctx) => {
-    const walk = frame === 1;
-    ellipse(ctx, 40, 68, 18, 7, "rgba(10,6,12,0.35)");
-    ctx.beginPath();
-    ctx.moveTo(22, 16);
-    ctx.lineTo(16, 4);
-    ctx.lineTo(30, 14);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(58, 16);
-    ctx.lineTo(64, 4);
-    ctx.lineTo(50, 14);
-    ctx.closePath();
-    ctx.fill();
-    disc(ctx, 22, 12, 5, css(PINK));
-    disc(ctx, 58, 12, 5, css(PINK));
-    ellipse(ctx, 40, 44, 22, 18, css(ORANGE));
-    disc(ctx, 40, 28, 18, css(ORANGE_HI));
-    ellipse(ctx, 40, 50, 12, 10, css(CREAM));
-    disc(ctx, 33, 26, 5, css(WHITE));
-    disc(ctx, 47, 26, 5, css(WHITE));
-    disc(ctx, 34, 27, 2.3, css(INK));
-    disc(ctx, 48, 27, 2.3, css(INK));
-    disc(ctx, 32, 25, 1.1, css(WHITE));
-    disc(ctx, 46, 25, 1.1, css(WHITE));
-    disc(ctx, 40, 33, 2.4, css(0xe07070));
-    ctx.strokeStyle = css(INK);
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(40, 35);
-    ctx.quadraticCurveTo(40, 40, 36, 42);
-    ctx.moveTo(40, 35);
-    ctx.quadraticCurveTo(40, 40, 44, 42);
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(255,230,200,0.7)";
-    ctx.lineWidth = 1.2;
-    [[18, 32, 4, 30], [18, 36, 4, 38], [62, 32, 76, 30], [62, 36, 76, 38]].forEach(([x1, y1, x2, y2]) => {
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    });
-    ctx.strokeStyle = css(ORANGE);
-    ctx.lineWidth = 7;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(56, 52);
-    ctx.quadraticCurveTo(74, 48, 70, 66);
-    ctx.stroke();
-    ctx.fillStyle = css(ORANGE);
-    const feet = walk
-      ? [
-          [26, 64],
-          [40, 62],
-          [34, 66],
-          [50, 64],
-        ]
-      : [
-          [28, 64],
-          [38, 64],
-          [44, 64],
-          [54, 64],
-        ];
-    feet.forEach(([x, y]) => ellipse(ctx, x, y, 5, 3.4, css(ORANGE)));
+function paintTiles(scene: Phaser.Scene): void {
+  paintTexture(scene, "tile-sky", 16, 16, (p) => {
+    p.fillRect(0, 0, 16, 16, NIGHT);
+    p.set(3, 4, 0x2a1838);
+    p.set(11, 2, STONE);
+    p.set(7, 9, 0x201428);
+  });
+  paintTexture(scene, "tile-road", 16, 16, (p) => {
+    p.fillRect(0, 0, 16, 16, ROAD);
+    p.set(2, 3, STONE);
+    p.set(9, 6, STONE_HI);
+    p.set(5, 12, 0x22141c);
+    p.set(13, 10, STONE);
+    p.set(7, 1, 0x3a2a22);
+  });
+  paintTexture(scene, "tile-shop", 48, 40, (p) => {
+    p.fillRect(0, 0, 48, 40, 0x1a1018);
+    p.fillRect(2, 8, 44, 24, WOOD);
+    p.fillRect(4, 4, 40, 8, 0xc45a3a);
+    p.fillRect(12, 14, 24, 8, INK);
+    p.fillRect(6, 26, 10, 10, GOLD);
+    p.fillRect(20, 26, 10, 10, GOLD);
+    p.fillRect(34, 26, 10, 10, GOLD);
+    p.fillRect(0, 32, 48, 8, WOOD_HI);
+  });
+  paintTexture(scene, "tile-lantern", 8, 12, (p) => {
+    p.fillRect(3, 0, 2, 3, WOOD);
+    p.disc(4, 7, 4, 0xff8a3a);
+    p.disc(4, 7, 2, GOLD);
+  });
+  paintTexture(scene, "tile-moon", 16, 16, (p) => {
+    p.disc(8, 8, 6, 0xffe6c4);
+    p.disc(6, 6, 2, WHITE);
+    p.disc(11, 7, 2, NIGHT);
   });
 }
 
 function paintSweeper(scene: Phaser.Scene): void {
-  paintCanvas(scene, "px-sweeper", 128, 80, (ctx) => {
-    ellipse(ctx, 64, 70, 40, 8, "rgba(10,6,12,0.4)");
-    roundRect(ctx, 18, 28, 92, 32, 10, "#4a5568");
-    roundRect(ctx, 22, 22, 70, 16, 6, "#6a7384");
-    roundRect(ctx, 24, 18, 28, 14, 4, css(GOLD));
-    disc(ctx, 32, 64, 10, css(INK));
-    disc(ctx, 96, 64, 10, css(INK));
-    disc(ctx, 32, 64, 5, "#8a93a4");
-    disc(ctx, 96, 64, 5, "#8a93a4");
-    ctx.fillStyle = "#c45a3a";
-    ctx.fillRect(6, 40, 18, 8);
-    disc(ctx, 10, 44, 6, css(GOLD));
-    ctx.fillStyle = "#ffe7c2";
-    ctx.font = "bold 12px Microsoft YaHei, sans-serif";
-    ctx.fillText("收摊", 48, 42);
+  paintTexture(scene, "px-sweeper", 32, 24, (p) => {
+    p.fillRect(4, 8, 24, 10, 0x4a5568);
+    p.fillRect(6, 6, 16, 6, 0x6a7384);
+    p.fillRect(6, 4, 8, 4, GOLD);
+    p.disc(8, 20, 3, INK);
+    p.disc(22, 20, 3, INK);
+    p.fillRect(1, 12, 5, 3, 0xc45a3a);
   });
 }
 
 function paintGlow(scene: Phaser.Scene): void {
-  paintCanvas(scene, "px-glow", 64, 64, (ctx) => {
-    glow(ctx, 32, 32, 30, "rgba(255, 210, 110, 0.9)");
-    disc(ctx, 32, 32, 8, "rgba(255,246,230,0.85)");
+  paintTexture(scene, "px-glow", 16, 16, (p) => {
+    p.disc(8, 8, 7, GOLD);
+    p.disc(8, 8, 4, ORANGE_HI);
+    p.disc(8, 8, 2, WHITE);
   });
 }
 
 function paintCrumb(scene: Phaser.Scene): void {
-  paintCanvas(scene, "px-crumb", 8, 8, (ctx) => {
-    disc(ctx, 4, 4, 3, css(GOLD));
-    disc(ctx, 3, 3, 1.2, css(WHITE));
+  paintTexture(scene, "px-crumb", 4, 4, (p) => {
+    p.fillRect(1, 1, 2, 2, GOLD);
+    p.set(0, 1, ORANGE);
   });
 }
 
 function paintPing(scene: Phaser.Scene): void {
-  paintCanvas(scene, "px-ping", 32, 36, (ctx) => {
-    ctx.fillStyle = css(GOLD);
-    ctx.beginPath();
-    ctx.moveTo(16, 32);
-    ctx.lineTo(4, 12);
-    ctx.lineTo(28, 12);
-    ctx.closePath();
-    ctx.fill();
-    disc(ctx, 16, 10, 8, "#fff6ea");
-  });
-}
-
-function paintSteam(scene: Phaser.Scene): void {
-  paintCanvas(scene, "px-steam", 24, 24, (ctx) => {
-    glow(ctx, 12, 12, 11, "rgba(255,255,255,0.55)");
+  paintTexture(scene, "px-ping", 9, 10, (p) => {
+    p.fillRect(4, 0, 1, 2, GOLD);
+    p.fillRect(3, 2, 3, 2, GOLD);
+    p.fillRect(2, 4, 5, 2, GOLD);
+    p.fillRect(1, 6, 7, 2, GOLD);
+    p.fillRect(3, 8, 3, 2, WHITE);
   });
 }
 
 function paintLamp(scene: Phaser.Scene): void {
-  paintCanvas(scene, "px-lamp", 24, 24, (ctx) => {
-    glow(ctx, 12, 12, 11, "rgba(255,255,255,0.8)");
-    disc(ctx, 12, 12, 6, "#fff");
+  paintTexture(scene, "px-lamp", 10, 10, (p) => {
+    p.fillRect(1, 1, 8, 8, INK);
+    p.fillRect(2, 2, 6, 6, 0x63e38a);
+    p.fillRect(3, 3, 2, 2, WHITE);
   });
+}
+
+function paintMarks(scene: Phaser.Scene): void {
+  paintTexture(scene, "px-yes", 11, 11, (p) => {
+    p.fillRect(0, 0, 11, 11, INK);
+    p.fillRect(1, 1, 9, 9, 0x2d6a38);
+    p.fillRect(2, 5, 2, 2, GOLD);
+    p.fillRect(4, 6, 2, 2, GOLD);
+    p.fillRect(6, 4, 2, 2, GOLD);
+    p.fillRect(8, 2, 2, 2, GOLD);
+  });
+  paintTexture(scene, "px-no", 11, 11, (p) => {
+    p.fillRect(0, 0, 11, 11, INK);
+    p.fillRect(1, 1, 9, 9, 0x8b1e1e);
+    p.set(3, 3, WHITE);
+    p.set(4, 4, WHITE);
+    p.set(5, 5, WHITE);
+    p.set(6, 6, WHITE);
+    p.set(7, 7, WHITE);
+    p.set(7, 3, WHITE);
+    p.set(6, 4, WHITE);
+    p.set(4, 6, WHITE);
+    p.set(3, 7, WHITE);
+  });
+  paintTexture(scene, "px-bang", 9, 12, (p) => {
+    p.fillRect(2, 0, 5, 8, 0x8b1e1e);
+    p.fillRect(3, 1, 3, 6, GOLD);
+    p.fillRect(3, 9, 3, 3, GOLD);
+  });
+}
+
+function drawItem(p: PixelPlotter, def: ItemDef): void {
+  const mid = 16;
+  const fill = def.color;
+  const accent = def.accent;
+  const shadow = hueShadow(fill);
+  const hi = lighten(fill);
+  switch (def.shape) {
+    case "round":
+      p.disc(mid, mid + 1, 11, INK);
+      p.disc(mid, mid, 10, fill);
+      p.disc(mid - 3, mid - 4, 3, hi);
+      p.disc(mid + 2, mid + 3, 3, shadow);
+      p.disc(mid, mid, 2, accent);
+      break;
+    case "box":
+      p.fillRect(4, 8, 24, 18, INK);
+      p.fillRect(5, 9, 22, 16, fill);
+      p.fillRect(6, 10, 10, 4, hi);
+      p.fillRect(7, 16, 18, 3, accent);
+      break;
+    case "bowl":
+      p.disc(mid, mid + 3, 11, INK);
+      p.disc(mid, mid + 2, 10, accent);
+      p.disc(mid, mid, 8, fill);
+      p.disc(mid - 3, mid - 3, 3, hi);
+      break;
+    case "lantern":
+      p.fillRect(15, 2, 2, 4, WOOD);
+      p.disc(mid, mid + 2, 11, INK);
+      p.disc(mid, mid + 1, 10, fill);
+      p.disc(mid, mid, 6, accent);
+      p.fillRect(10, 4, 12, 3, WOOD);
+      p.fillRect(10, 24, 12, 3, WOOD);
+      break;
+    case "stall":
+      p.fillRect(2, 14, 28, 16, INK);
+      p.fillRect(3, 15, 26, 14, WOOD);
+      p.fillRect(3, 8, 26, 8, fill);
+      p.fillRect(4, 6, 24, 4, accent);
+      p.disc(8, 10, 1, GOLD);
+      p.disc(16, 9, 1, GOLD);
+      p.disc(24, 10, 1, GOLD);
+      p.fillRect(12, 18, 8, 6, CREAM);
+      break;
+    case "scooter":
+      p.disc(8, 24, 5, INK);
+      p.disc(24, 24, 5, INK);
+      p.disc(8, 24, 3, STONE);
+      p.disc(24, 24, 3, STONE);
+      p.fillRect(6, 14, 22, 8, INK);
+      p.fillRect(7, 15, 20, 6, fill);
+      p.fillRect(22, 8, 3, 10, accent);
+      p.fillRect(20, 6, 6, 4, GOLD);
+      break;
+    case "arch":
+      p.fillRect(4, 14, 6, 16, fill);
+      p.fillRect(22, 14, 6, 16, fill);
+      p.fillRect(2, 8, 28, 8, accent);
+      p.fillRect(4, 4, 24, 6, fill);
+      p.fillRect(6, 5, 8, 3, GOLD);
+      p.fillRect(18, 5, 8, 3, GOLD);
+      break;
+    default:
+      p.disc(mid, mid, 10, fill);
+  }
 }

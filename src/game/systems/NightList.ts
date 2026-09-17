@@ -8,11 +8,7 @@ export class NightList {
   completed = 0;
 
   constructor(rng: Phaser.Math.RandomDataGenerator) {
-    this.courses = [
-      SNACKS[rng.integerInRange(0, SNACKS.length - 1)],
-      WARES[rng.integerInRange(0, WARES.length - 1)],
-      STALLS[rng.integerInRange(0, STALLS.length - 1)],
-    ];
+    this.courses = [SNACKS[3], WARES[rng.integerInRange(0, WARES.length - 1)], STALLS[rng.integerInRange(0, STALLS.length - 1)]];
   }
 
   get current(): ItemDef | undefined {

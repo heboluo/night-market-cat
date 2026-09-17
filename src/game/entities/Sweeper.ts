@@ -8,7 +8,7 @@ export class Sweeper extends Phaser.GameObjects.Sprite {
     super(scene, x, y, "px-sweeper");
     scene.add.existing(this);
     this.setDepth(1800);
-    this.setScale((this.radius * 2) / 70);
+    this.setScale((this.radius * 2) / 18);
   }
 
   chase(target: { x: number; y: number }, dt: number): void {
