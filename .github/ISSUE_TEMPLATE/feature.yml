@@ -1,0 +1,26 @@
+name: 新功能
+description: 玩家能感知到的新能力或新内容
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: player
+    attributes:
+      label: 玩家会看到什么
+      placeholder: 例如：吞掉摊位时镜头会明显拉开，碎屑会爆开。
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 怎样算做完
+      placeholder: 可勾选的完成标准。
+    validations:
+      required: true
+  - type: textarea
+    id: out
+    attributes:
+      label: 这次不做什么
+      placeholder: 避免范围膨胀。
+    validations:
+      required: false

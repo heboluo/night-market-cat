@@ -1,0 +1,22 @@
+name: 缺陷
+description: 玩起来不对、卡顿或构建失败
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: happen
+    attributes:
+      label: 实际发生了什么
+    validations:
+      required: true
+  - type: textarea
+    id: expect
+    attributes:
+      label: 期望是什么
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      placeholder: Chrome / 手机 / 本地 dev
