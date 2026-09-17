@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { ensureArt } from "../art/createSprites";
 import { startSound, unlockAudio } from "../audio/sfx";
-import { formatRank, formatSize, type RoundResult } from "../types";
+import { formatRank, type RoundResult } from "../types";
 
 export class ResultScene extends Phaser.Scene {
   private result!: RoundResult;
@@ -19,11 +19,15 @@ export class ResultScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor("#16101c");
     this.add.tileSprite(width / 2, height / 2, width, height, "px-ground");
-    const cat = this.add.sprite(width / 2, height * 0.2, "px-cat-0");
+    const cat = this.add.sprite(width / 2, height * 0.18, "px-cat-0");
     cat.setScale(3.4);
-    cat.play("cat-idle");
 
-    const title = this.result.ateArch ? "牌坊进肚了" : this.result.reason === "hungry" ? "饿得走不动了" : this.result.reason === "swept" ? "被收摊车撵走了" : "夜市打烊了";
+    const title =
+      this.result.reason === "king"
+        ? "牌坊进肚了"
+        : this.result.reason === "win"
+          ? "今晚吃饱了"
+          : "被摊主抓住了";
 
     this.add
       .text(width / 2, height * 0.34, title, {
@@ -37,8 +41,8 @@ export class ResultScene extends Phaser.Scene {
 
     const lines = [
       `评价：${formatRank(this.result)}`,
-      `今晚吞下 ${this.result.eaten} 样东西`,
-      `体型：${formatSize(this.result.radius)}`,
+      `清单 ${this.result.completed}/3    ${this.result.courses.join(" → ")}`,
+      `今晚吞下 ${this.result.eaten} 样`,
       `最大的一口：${this.result.biggestName}`,
     ];
 

@@ -1,6 +1,6 @@
 {
   "name": "night-market-cat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "跟着走，碰到就吃。一只在夜市里越吃越大的猫。",
   "type": "module",

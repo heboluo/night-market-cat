@@ -93,14 +93,9 @@ export function ensureArt(scene: Phaser.Scene): void {
   paintSweeper(scene);
   paintGlow(scene);
   paintCrumb(scene);
+  paintPing(scene);
 
-  if (!scene.anims.exists("cat-idle")) {
-    scene.anims.create({
-      key: "cat-idle",
-      frames: [{ key: "px-cat-0" }, { key: "px-cat-1" }],
-      frameRate: 3,
-      repeat: -1,
-    });
+  if (!scene.anims.exists("cat-walk")) {
     scene.anims.create({
       key: "cat-walk",
       frames: [{ key: "px-cat-0" }, { key: "px-cat-1" }],
@@ -171,6 +166,16 @@ function paintCrumb(scene: Phaser.Scene): void {
     p.fillRect(1, 1, 2, 2, GOLD);
     p.set(0, 1, ORANGE);
     p.set(2, 3, ORANGE_HI);
+  });
+}
+
+function paintPing(scene: Phaser.Scene): void {
+  paintTexture(scene, "px-ping", 11, 10, (p) => {
+    p.fillRect(5, 0, 1, 1, GOLD);
+    p.fillRect(4, 1, 3, 2, GOLD);
+    p.fillRect(3, 3, 5, 2, GOLD);
+    p.fillRect(2, 5, 7, 2, GOLD);
+    p.fillRect(4, 7, 3, 2, 0xfff6ea);
   });
 }
 

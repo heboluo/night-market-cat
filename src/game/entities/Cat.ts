@@ -14,7 +14,8 @@ export class Cat extends Phaser.GameObjects.Sprite {
     scene.add.existing(this);
     this.setDepth(2000);
     this.setOrigin(0.5, 0.72);
-    this.play("cat-idle");
+    this.anims.stop();
+    this.setTexture("px-cat-0");
     this.refreshScale();
   }
 
@@ -40,19 +41,18 @@ export class Cat extends Phaser.GameObjects.Sprite {
     return this.radius <= CAT_MIN_RADIUS + 0.05;
   }
 
-  follow(target: Phaser.Math.Vector2, dt: number): void {
-    const speed = Phaser.Math.Clamp(300 - this.radius * 0.42, 150, 300);
-    const dx = target.x - this.x;
-    const dy = target.y - this.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist < 14) {
+  steer(ix: number, iy: number, dt: number): void {
+    if (ix === 0 && iy === 0) {
       this.setMoving(false);
       return;
     }
-    const step = Math.min(dist, speed * dt);
-    this.x += (dx / dist) * step;
-    this.y += (dy / dist) * step;
-    this.setFlipX(dx < 0);
+    const len = Math.hypot(ix, iy) || 1;
+    const nx = ix / len;
+    const ny = iy / len;
+    const speed = Phaser.Math.Clamp(280 - this.radius * 0.35, 150, 280);
+    this.x += nx * speed * dt;
+    this.y += ny * speed * dt;
+    this.setFlipX(nx < 0);
     this.setMoving(true);
   }
 
@@ -71,13 +71,19 @@ export class Cat extends Phaser.GameObjects.Sprite {
   }
 
   private refreshScale(): void {
-    const scale = (this.radius * 2) / 22;
-    this.setScale(scale);
+    this.setScale((this.radius * 2) / 22);
   }
 
   private setMoving(moving: boolean): void {
-    if (this.moving === moving) return;
+    if (this.moving === moving) {
+      if (!moving) this.setTexture("px-cat-0");
+      return;
+    }
     this.moving = moving;
-    this.play(moving ? "cat-walk" : "cat-idle", true);
+    if (moving) this.play("cat-walk", true);
+    else {
+      this.anims.stop();
+      this.setTexture("px-cat-0");
+    }
   }
 }

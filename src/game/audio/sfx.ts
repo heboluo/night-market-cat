@@ -36,6 +36,11 @@ export function eatSound(radius: number): void {
   beep(pitch * 1.5, 0.08, "sine", 0.03);
 }
 
+export function successSound(): void {
+  beep(520, 0.1, "triangle", 0.05);
+  beep(740, 0.16, "sine", 0.05);
+}
+
 export function startSound(): void {
   beep(320, 0.1, "square", 0.04);
   beep(480, 0.16, "triangle", 0.05);

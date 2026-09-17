@@ -1,4 +1,4 @@
-export type EndReason = "time" | "hungry" | "swept";
+export type EndReason = "caught" | "win" | "king";
 
 export interface RoundResult {
   eaten: number;
@@ -7,6 +7,9 @@ export interface RoundResult {
   remaining: number;
   ateArch: boolean;
   reason: EndReason;
+  completed: number;
+  alert: number;
+  courses: string[];
 }
 
 export function formatSize(radius: number): string {
@@ -18,8 +21,12 @@ export function formatSize(radius: number): string {
 }
 
 export function formatRank(result: RoundResult): string {
-  if (result.ateArch) return "夜市之王";
-  if (result.reason === "hungry") return "饿扁了";
-  if (result.reason === "swept") return "被收摊车撞回去了";
+  if (result.reason === "king" || result.ateArch) return "夜市之王";
+  if (result.reason === "win") return "今晚吃饱了";
+  if (result.reason === "caught") return "被摊主抓住了";
   return formatSize(result.radius);
+}
+
+export function alertStars(alert: number): string {
+  return "★".repeat(alert) + "☆".repeat(Math.max(0, 3 - alert));
 }
