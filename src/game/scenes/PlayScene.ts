@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { ensureArt } from "../art/createSprites";
+import { ensureArt, ensureItemTexture } from "../art/createSprites";
 import { closingSound, eatSound, hurtSound, successSound, warnSound } from "../audio/sfx";
 import {
   CRAVING_GROWTH,
@@ -7,21 +7,25 @@ import {
   GROWTH_KEEP,
   HURT_COOLDOWN,
   MAX_ALERT,
-  WORLD_SIZE,
+  STALL_SIGHT,
+  WORLD_H,
+  WORLD_W,
 } from "../constants";
 import { Cat } from "../entities/Cat";
 import { Edible } from "../entities/Edible";
 import { Sweeper } from "../entities/Sweeper";
 import { NightList } from "../systems/NightList";
 import { alertStars, type EndReason, type RoundResult } from "../types";
-import { paintGround, spawnMarket } from "../world/spawnMarket";
+import { spawnMarket } from "../world/spawnMarket";
+import { paintStreet } from "../world/street";
 
 export class PlayScene extends Phaser.Scene {
   private cat!: Cat;
   private items: Edible[] = [];
   private list!: NightList;
   private hurtWait = 0;
-  private hud!: Phaser.GameObjects.Text;
+  private coach!: Phaser.GameObjects.Text;
+  private stars!: Phaser.GameObjects.Text;
   private crumbs!: Phaser.GameObjects.Particles.ParticleEmitter;
   private hudCam!: Phaser.Cameras.Scene2D.Camera;
   private uiObjects: Phaser.GameObjects.GameObject[] = [];
@@ -31,6 +35,7 @@ export class PlayScene extends Phaser.Scene {
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private pings: Phaser.GameObjects.Image[] = [];
   private pingT = 0;
+  private courseIcons: Phaser.GameObjects.Image[] = [];
 
   constructor() {
     super("play");
@@ -38,50 +43,35 @@ export class PlayScene extends Phaser.Scene {
 
   create(): void {
     ensureArt(this);
-    paintGround(this);
-    this.cameras.main.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
-    this.cameras.main.fadeIn(280, 20, 12, 18);
+    paintStreet(this);
+    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
+    this.cameras.main.fadeIn(400, 12, 8, 18);
 
     const rng = new Phaser.Math.RandomDataGenerator();
     this.list = new NightList(rng);
-    this.items = spawnMarket(this, rng);
-    this.cat = new Cat(this, WORLD_SIZE / 2, WORLD_SIZE / 2);
+    this.items = spawnMarket(this, rng, this.list.courses);
+    this.cat = new Cat(this, 280, WORLD_H * 0.62);
 
     this.crumbs = this.add.particles(0, 0, "px-crumb", {
-      lifespan: 420,
-      speed: { min: 40, max: 140 },
-      scale: { start: 1.2, end: 0 },
-      alpha: { start: 0.95, end: 0 },
+      lifespan: 520,
+      speed: { min: 50, max: 160 },
+      scale: { start: 1.4, end: 0 },
+      alpha: { start: 1, end: 0 },
       emitting: false,
-      quantity: 8,
+      quantity: 10,
     });
     this.crumbs.setDepth(3000);
 
     const kb = this.input.keyboard;
-    this.keys = kb
-      ? (kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT") as Record<string, Phaser.Input.Keyboard.Key>)
-      : {};
+    this.keys = kb ? (kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT") as Record<string, Phaser.Input.Keyboard.Key>) : {};
 
-    this.hud = this.add
-      .text(24, 18, "", {
-        fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "18px",
-        color: "#ffe7c2",
-        stroke: "#1a0c10",
-        strokeThickness: 5,
-      })
-      .setScrollFactor(0)
-      .setDepth(5000);
-
-    this.uiObjects = [this.hud];
-    this.cameras.main.startFollow(this.cat, true, 0.09, 0.09);
+    this.buildHud();
+    this.cameras.main.startFollow(this.cat, true, 0.12, 0.12);
     this.hudCam = this.cameras.add(0, 0, this.scale.width, this.scale.height);
     this.hudCam.setScroll(0, 0);
     this.hudCam.transparent = true;
     this.bindCameras();
-    this.scale.on("resize", (gameSize: Phaser.Structs.Size) => {
-      this.hudCam.setSize(gameSize.width, gameSize.height);
-    });
+    this.scale.on("resize", (gameSize: Phaser.Structs.Size) => this.hudCam.setSize(gameSize.width, gameSize.height));
     this.updateHud();
     this.updateZoom();
   }
@@ -91,8 +81,8 @@ export class PlayScene extends Phaser.Scene {
     this.hurtWait = Math.max(0, this.hurtWait - dt);
     this.pingT += dt;
     this.readMove(dt);
-    this.cat.x = Phaser.Math.Clamp(this.cat.x, 80, WORLD_SIZE - 80);
-    this.cat.y = Phaser.Math.Clamp(this.cat.y, 80, WORLD_SIZE - 80);
+    this.cat.x = Phaser.Math.Clamp(this.cat.x, 70, WORLD_W - 70);
+    this.cat.y = Phaser.Math.Clamp(this.cat.y, 220, WORLD_H - 70);
     this.spawnHunterIfNeeded();
     this.sweeper?.chase(this.cat, dt);
     this.resolveEats(dt);
@@ -100,6 +90,38 @@ export class PlayScene extends Phaser.Scene {
     this.refreshPings();
     this.updateZoom();
     this.updateHud();
+  }
+
+  private buildHud(): void {
+    const { width } = this.scale;
+    this.list.courses.forEach((course, i) => {
+      const icon = this.add.image(width / 2 - 70 + i * 70, 42, ensureItemTexture(this, course));
+      icon.setScrollFactor(0).setDepth(5000).setScale(0.9);
+      this.courseIcons.push(icon);
+    });
+    this.stars = this.add
+      .text(width - 28, 24, "", {
+        fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
+        fontSize: "22px",
+        color: "#ffb3b3",
+        stroke: "#1a0c10",
+        strokeThickness: 5,
+      })
+      .setOrigin(1, 0)
+      .setScrollFactor(0)
+      .setDepth(5000);
+    this.coach = this.add
+      .text(width / 2, this.scale.height - 36, "", {
+        fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
+        fontSize: "22px",
+        color: "#ffe7c2",
+        stroke: "#1a0c10",
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5, 1)
+      .setScrollFactor(0)
+      .setDepth(5000);
+    this.uiObjects = [...this.courseIcons, this.stars, this.coach];
   }
 
   private readMove(dt: number): void {
@@ -117,10 +139,19 @@ export class PlayScene extends Phaser.Scene {
     this.cat.steer(ix, iy, dt);
   }
 
+  private watchingStallNear(item: Edible): Edible | undefined {
+    return this.items.find(
+      (stall) =>
+        stall.def.tier === "stall" &&
+        !stall.eaten &&
+        stall.watching &&
+        Math.hypot(stall.x - item.x, stall.y - item.y) < STALL_SIGHT,
+    );
+  }
+
   private spawnHunterIfNeeded(): void {
     if (this.sweeper || this.list.alert < 2) return;
-    const edge = this.cat.x > WORLD_SIZE / 2 ? 80 : WORLD_SIZE - 80;
-    this.sweeper = new Sweeper(this, edge, this.cat.y);
+    this.sweeper = new Sweeper(this, this.cat.x > WORLD_W / 2 ? 80 : WORLD_W - 80, this.cat.y);
     this.hudCam.ignore(this.sweeper);
     warnSound();
   }
@@ -145,50 +176,50 @@ export class PlayScene extends Phaser.Scene {
     }
     if (this.hurtWait > 0) return;
     const inv = dist === 0 ? 1 : 1 / dist;
-    this.cat.bounceFrom(-dx * inv, -dy * inv, 42);
+    this.cat.bounceFrom(-dx * inv, -dy * inv, 46);
     this.list.raise(1);
     this.hurtWait = HURT_COOLDOWN;
     hurtSound();
   }
 
   private resolveEats(dt: number): void {
-    const cat = this.cat;
     for (const item of this.items) {
       if (item.eaten) continue;
       item.wander(dt);
-      const dx = item.x - cat.x;
-      const dy = item.y - cat.y;
+      const dx = item.x - this.cat.x;
+      const dy = item.y - this.cat.y;
       const dist = Math.hypot(dx, dy);
-      const reach = cat.radius + item.radius * 0.12;
-      if (dist > reach) continue;
-      if (cat.radius > item.radius * EAT_RATIO) {
-        this.swallow(item);
-      } else if (item.radius > cat.radius * 1.2) {
+      if (dist > this.cat.radius + item.radius * 0.12) continue;
+      if (this.cat.radius > item.radius * EAT_RATIO) this.trySwallow(item);
+      else if (item.radius > this.cat.radius * 1.15) {
         const inv = dist === 0 ? 1 : 1 / dist;
-        cat.bounceFrom(-dx * inv, -dy * inv, 24);
-        if (item.def.tier === "vehicle" && this.hurtWait <= 0) {
-          this.list.raise(1);
-          this.hurtWait = HURT_COOLDOWN;
-          hurtSound();
-        }
+        this.cat.bounceFrom(-dx * inv, -dy * inv, 22);
       }
     }
   }
 
-  private swallow(item: Edible): void {
+  private trySwallow(item: Edible): void {
+    const risky = item.def.tier === "ware" || item.def.tier === "stall" || this.list.isTarget(item.def);
+    const seen = risky ? this.watchingStallNear(item) : undefined;
+    if (seen) {
+      const dx = item.x - this.cat.x;
+      const dy = item.y - this.cat.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      this.cat.bounceFrom(-dx / dist, -dy / dist, 36);
+      this.list.raise(1);
+      this.hurtWait = HURT_COOLDOWN;
+      this.flash("被看见了！等绿灯");
+      hurtSound();
+      return;
+    }
+
     item.eaten = true;
     const target = this.list.isTarget(item.def);
-    const keep = target ? CRAVING_GROWTH : item.def.tier === "snack" ? GROWTH_KEEP : GROWTH_KEEP * 0.6;
+    const keep = target ? CRAVING_GROWTH : item.def.tier === "snack" ? GROWTH_KEEP : GROWTH_KEEP * 0.7;
     this.cat.growBy(item.area * keep, item.def.name, item.radius, item.def.tier === "landmark");
-    this.crumbs.emitParticleAt(item.x, item.y, Math.min(18, 6 + Math.floor(item.radius / 8)));
-    this.cameras.main.shake(70, Math.min(0.008, item.radius / 9000));
-    this.tweens.add({
-      targets: item,
-      scale: 0,
-      alpha: 0,
-      duration: 140,
-      onComplete: () => item.destroy(),
-    });
+    this.crumbs.emitParticleAt(item.x, item.y, 12);
+    this.cameras.main.shake(80, 0.006);
+    this.tweens.add({ targets: item, scale: 0, alpha: 0, duration: 160, onComplete: () => item.destroy() });
 
     if (item.def.tier === "landmark") {
       this.finish("king");
@@ -197,68 +228,63 @@ export class PlayScene extends Phaser.Scene {
     if (target) {
       successSound();
       this.list.succeed();
-      this.flash("吃到了！");
+      this.flash("偷到了！");
       if (this.list.done) this.finish("win");
       return;
     }
     eatSound(item.radius);
-    if (item.def.tier !== "snack") {
-      this.list.raise(item.def.tier === "stall" ? 2 : 1);
-      this.flash("惊动了摊主");
-    }
   }
 
   private flash(text: string): void {
     const label = this.add
-      .text(this.cat.x, this.cat.y - this.cat.radius - 18, text, {
+      .text(this.cat.x, this.cat.y - this.cat.radius - 20, text, {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "20px",
+        fontSize: "22px",
         color: "#ffe7c2",
         stroke: "#1a0c10",
-        strokeThickness: 4,
+        strokeThickness: 5,
       })
       .setOrigin(0.5)
       .setDepth(4000);
     this.hudCam.ignore(label);
-    this.tweens.add({
-      targets: label,
-      y: label.y - 28,
-      alpha: 0,
-      duration: 700,
-      onComplete: () => label.destroy(),
-    });
+    this.tweens.add({ targets: label, y: label.y - 32, alpha: 0, duration: 700, onComplete: () => label.destroy() });
   }
 
   private refreshPings(): void {
     const name = this.list.current?.name;
     const live = this.items.filter((item) => !item.eaten && item.def.name === name);
     while (this.pings.length < live.length) {
-      const ping = this.add.image(0, 0, "px-ping").setDepth(2500).setScale(2);
+      const ping = this.add.image(0, 0, "px-ping").setDepth(2500).setScale(2.2);
       this.hudCam.ignore(ping);
       this.pings.push(ping);
     }
     this.pings.forEach((ping, i) => {
       const item = live[i];
-      if (!item) {
-        ping.setVisible(false);
-        return;
-      }
-      ping.setVisible(true);
-      ping.setPosition(item.x, item.y - item.radius - 16 + Math.sin(this.pingT * 6) * 4);
+      ping.setVisible(!!item);
+      if (item) ping.setPosition(item.x, item.y - item.radius - 18 + Math.sin(this.pingT * 6) * 5);
     });
   }
 
   private updateZoom(): void {
-    const zoom = Phaser.Math.Clamp(92 / this.cat.radius, 0.22, 1.35);
-    const cam = this.cameras.main;
-    cam.setZoom(Phaser.Math.Linear(cam.zoom, zoom, 0.08));
+    const zoom = Phaser.Math.Clamp(110 / this.cat.radius, 0.55, 1.15);
+    this.cameras.main.setZoom(Phaser.Math.Linear(this.cameras.main.zoom, zoom, 0.08));
   }
 
   private updateHud(): void {
-    const want = this.list.current ? this.list.current.name : "今晚吃饱了";
-    const trail = this.list.courses.map((course, i) => (i < this.list.index ? "✓" : i === this.list.index ? `【${course.name}】` : course.name)).join(" → ");
-    const hunt = this.sweeper ? "\n摊主追来了，躲开或反吃" : "";
-    this.hud.setText(`今晚想吃  ${want}\n${trail}\n惊动 ${alertStars(this.list.alert)}    WASD 走路${hunt}`);
+    this.courseIcons.forEach((icon, i) => {
+      icon.setAlpha(i < this.list.index ? 0.28 : 1);
+      icon.setScale(i === this.list.index ? 1.05 + Math.sin(this.pingT * 5) * 0.08 : 0.85);
+    });
+    this.stars.setText(alertStars(this.list.alert));
+    this.coach.setText(
+      this.cat.eaten === 0
+        ? "WASD 走到发光的小吃上"
+        : this.list.completed === 0
+          ? "绿灯再偷金色箭头那一口，红灯会被看见"
+          : this.sweeper
+            ? "摊主追来了，躲开"
+            : "",
+    );
   }
 
   private finish(reason: EndReason): void {

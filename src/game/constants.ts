@@ -1,19 +1,13 @@
-export const WORLD_SIZE = 4200;
-export const CAT_START_RADIUS = 26;
-export const CAT_MIN_RADIUS = 15;
-export const EAT_RATIO = 1.12;
-export const GROWTH_KEEP = 0.2;
-export const CRAVING_GROWTH = 0.42;
+export const WORLD_W = 2560;
+export const WORLD_H = 1440;
+export const WORLD_SIZE = WORLD_W;
+export const CAT_START_RADIUS = 28;
+export const CAT_MIN_RADIUS = 16;
+export const EAT_RATIO = 1.08;
+export const GROWTH_KEEP = 0.18;
+export const CRAVING_GROWTH = 0.5;
 export const MAX_ALERT = 3;
-export const SWEEPER_RADIUS = 70;
-export const SWEEPER_SPEED = 96;
-export const HURT_COOLDOWN = 0.85;
-
-export const COLORS = {
-  night: 0x16101c,
-  road: 0x2a1c26,
-  curb: 0x3a2430,
-  stall: 0x4a2a22,
-  lantern: 0xffb35a,
-  hud: "#ffe7c2",
-} as const;
+export const SWEEPER_RADIUS = 64;
+export const SWEEPER_SPEED = 110;
+export const HURT_COOLDOWN = 0.7;
+export const STALL_SIGHT = 150;

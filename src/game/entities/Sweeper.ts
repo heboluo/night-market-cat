@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { SWEEPER_RADIUS, SWEEPER_SPEED, WORLD_SIZE } from "../constants";
+import { SWEEPER_RADIUS, SWEEPER_SPEED, WORLD_H, WORLD_W } from "../constants";
 
 export class Sweeper extends Phaser.GameObjects.Sprite {
   readonly radius = SWEEPER_RADIUS;
@@ -18,7 +18,7 @@ export class Sweeper extends Phaser.GameObjects.Sprite {
     this.x += (dx / dist) * SWEEPER_SPEED * dt;
     this.y += (dy / dist) * SWEEPER_SPEED * dt;
     this.setFlipX(dx < 0);
-    this.x = Phaser.Math.Clamp(this.x, 60, WORLD_SIZE - 60);
-    this.y = Phaser.Math.Clamp(this.y, 60, WORLD_SIZE - 60);
+    this.x = Phaser.Math.Clamp(this.x, 60, WORLD_W - 60);
+    this.y = Phaser.Math.Clamp(this.y, 60, WORLD_H - 60);
   }
 }

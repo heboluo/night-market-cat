@@ -112,7 +112,7 @@ export function itemTextureKey(def: ItemDef): string {
 export function ensureItemTexture(scene: Phaser.Scene, def: ItemDef): string {
   const key = itemTextureKey(def);
   if (scene.textures.exists(key)) return key;
-  paintTexture(scene, key, 32, 32, (p) => drawItemPixels(p, def));
+  paintTexture(scene, key, 64, 64, (p) => drawItemPixels(p, def));
   return key;
 }
 
@@ -180,75 +180,75 @@ function paintPing(scene: Phaser.Scene): void {
 }
 
 function drawItemPixels(p: PixelPlotter, def: ItemDef): void {
-  const mid = 16;
+  const mid = 32;
   const fill = def.color;
   const accent = def.accent;
   const shadow = hueShadow(fill);
   const hi = lighten(fill);
   switch (def.shape) {
     case "round":
-      p.disc(mid, mid + 1, 11, INK);
-      p.disc(mid, mid, 10, fill);
-      p.disc(mid - 3, mid - 3, 4, hi);
-      p.disc(mid + 3, mid + 3, 3, shadow);
-      p.disc(mid - 1, mid, 2, accent);
+      p.disc(mid, mid + 2, 22, INK);
+      p.disc(mid, mid, 20, fill);
+      p.disc(mid - 6, mid - 7, 8, hi);
+      p.disc(mid + 6, mid + 7, 6, shadow);
+      p.disc(mid - 2, mid, 5, accent);
       break;
     case "box":
-      p.fillRect(4, 8, 24, 18, INK);
-      p.fillRect(5, 9, 22, 16, fill);
-      p.fillRect(6, 10, 10, 4, hi);
-      p.fillRect(7, 16, 18, 3, accent);
-      p.fillRect(8, 20, 16, 3, shadow);
+      p.fillRect(8, 16, 48, 36, INK);
+      p.fillRect(10, 18, 44, 32, fill);
+      p.fillRect(12, 20, 20, 8, hi);
+      p.fillRect(14, 32, 36, 6, accent);
+      p.fillRect(16, 40, 32, 6, shadow);
       break;
     case "bowl":
-      p.disc(mid, mid + 3, 11, INK);
-      p.disc(mid, mid + 2, 10, accent);
-      p.disc(mid, mid, 8, fill);
-      p.disc(mid - 2, mid - 2, 3, hi);
+      p.disc(mid, mid + 6, 22, INK);
+      p.disc(mid, mid + 4, 20, accent);
+      p.disc(mid, mid, 16, fill);
+      p.disc(mid - 5, mid - 5, 6, hi);
       break;
     case "lantern":
-      p.fillRect(15, 2, 2, 4, WOOD);
-      p.disc(mid, mid + 2, 11, INK);
-      p.disc(mid, mid + 1, 10, fill);
-      p.disc(mid, mid, 7, accent);
-      p.disc(mid - 3, mid - 2, 3, hi);
-      p.fillRect(10, 4, 12, 3, WOOD);
-      p.fillRect(10, 24, 12, 3, WOOD);
+      p.fillRect(30, 4, 4, 8, WOOD);
+      p.disc(mid, mid + 4, 22, INK);
+      p.disc(mid, mid + 2, 20, fill);
+      p.disc(mid, mid, 14, accent);
+      p.disc(mid - 6, mid - 4, 6, hi);
+      p.fillRect(20, 8, 24, 6, WOOD);
+      p.fillRect(20, 48, 24, 6, WOOD);
       break;
     case "stall":
-      p.fillRect(2, 14, 28, 16, INK);
-      p.fillRect(3, 15, 26, 14, WOOD);
-      p.fillRect(4, 16, 10, 5, WOOD_HI);
-      p.fillRect(3, 8, 26, 8, fill);
-      p.fillRect(4, 6, 24, 4, accent);
-      p.set(8, 10, GOLD);
-      p.set(16, 9, GOLD);
-      p.set(24, 10, GOLD);
-      p.fillRect(12, 18, 8, 6, CREAM);
+      p.fillRect(4, 28, 56, 32, INK);
+      p.fillRect(6, 30, 52, 28, WOOD);
+      p.fillRect(8, 32, 20, 10, WOOD_HI);
+      p.fillRect(6, 16, 52, 16, fill);
+      p.fillRect(8, 12, 48, 8, accent);
+      p.disc(16, 20, 3, GOLD);
+      p.disc(32, 18, 3, GOLD);
+      p.disc(48, 20, 3, GOLD);
+      p.fillRect(24, 36, 16, 12, CREAM);
       break;
     case "scooter":
-      p.disc(8, 24, 5, INK);
-      p.disc(26, 24, 5, INK);
-      p.disc(8, 24, 3, STONE);
-      p.disc(26, 24, 3, STONE);
-      p.fillRect(6, 14, 24, 8, INK);
-      p.fillRect(7, 15, 22, 6, fill);
-      p.fillRect(8, 16, 8, 3, hi);
-      p.fillRect(22, 8, 3, 10, accent);
-      p.fillRect(21, 7, 5, 3, GOLD);
+      p.disc(16, 48, 10, INK);
+      p.disc(50, 48, 10, INK);
+      p.disc(16, 48, 6, STONE);
+      p.disc(50, 48, 6, STONE);
+      p.fillRect(12, 28, 48, 16, INK);
+      p.fillRect(14, 30, 44, 12, fill);
+      p.fillRect(16, 32, 16, 6, hi);
+      p.fillRect(44, 16, 6, 20, accent);
+      p.fillRect(42, 14, 10, 6, GOLD);
       break;
     case "arch":
-      p.fillRect(4, 14, 6, 16, INK);
-      p.fillRect(22, 14, 6, 16, INK);
-      p.fillRect(5, 15, 4, 14, fill);
-      p.fillRect(23, 15, 4, 14, fill);
-      p.fillRect(2, 8, 28, 8, INK);
-      p.fillRect(3, 9, 26, 6, accent);
-      p.fillRect(4, 4, 24, 6, fill);
-      p.fillRect(6, 5, 8, 3, GOLD);
-      p.fillRect(18, 5, 8, 3, GOLD);
+      p.fillRect(8, 28, 12, 32, INK);
+      p.fillRect(44, 28, 12, 32, INK);
+      p.fillRect(10, 30, 8, 28, fill);
+      p.fillRect(46, 30, 8, 28, fill);
+      p.fillRect(4, 16, 56, 16, INK);
+      p.fillRect(6, 18, 52, 12, accent);
+      p.fillRect(8, 8, 48, 12, fill);
+      p.fillRect(12, 10, 16, 6, GOLD);
+      p.fillRect(36, 10, 16, 6, GOLD);
       break;
     default:
-      p.disc(mid, mid, 10, fill);
+      p.disc(mid, mid, 20, fill);
   }
 }
