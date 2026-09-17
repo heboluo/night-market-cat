@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { ensureArt } from "../art/createSprites";
 import { startSound, unlockAudio } from "../audio/sfx";
 
 export class MenuScene extends Phaser.Scene {
@@ -7,20 +8,29 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    ensureArt(this);
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("#140c18");
+    this.cameras.main.setBackgroundColor("#16101c");
+    this.add.tileSprite(width / 2, height / 2, width, height, "px-ground");
 
-    this.add.rectangle(width / 2, height / 2, width, height, 0x140c18);
-    for (let i = 0; i < 18; i++) {
-      const x = Phaser.Math.Between(40, width - 40);
-      const y = Phaser.Math.Between(40, height - 40);
-      this.add.circle(x, y, Phaser.Math.Between(4, 10), 0xffb35a, 0.18);
+    for (let i = 0; i < 8; i++) {
+      const glow = this.add.image(
+        Phaser.Math.Between(50, width - 50),
+        Phaser.Math.Between(40, height - 80),
+        "px-glow",
+      );
+      glow.setScale(Phaser.Math.FloatBetween(1.6, 2.8));
+      glow.setAlpha(0.35);
     }
 
-    const title = this.add
-      .text(width / 2, height * 0.32, "夜市猫", {
+    const cat = this.add.sprite(width / 2, height * 0.22, "px-cat-0");
+    cat.setScale(4);
+    cat.play("cat-idle");
+
+    this.add
+      .text(width / 2, height * 0.4, "夜市猫", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "84px",
+        fontSize: "78px",
         color: "#ffe7c2",
         stroke: "#8b3a1e",
         strokeThickness: 8,
@@ -28,25 +38,25 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.46, "跟着走，碰到就吃", {
+      .text(width / 2, height * 0.52, "跟着走，碰到就吃", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "28px",
+        fontSize: "26px",
         color: "#ffb35a",
       })
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.58, "没有按键，没有失败\n把夜市一点点吞进肚子里", {
+      .text(width / 2, height * 0.64, "开局没有门槛，但你会饿\n电动车会撞，收摊车会追\n吞下牌坊才算真正赢", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "20px",
+        fontSize: "18px",
         color: "#d9c4b0",
         align: "center",
-        lineSpacing: 10,
+        lineSpacing: 8,
       })
       .setOrigin(0.5);
 
     const hint = this.add
-      .text(width / 2, height * 0.78, "点一下开始", {
+      .text(width / 2, height * 0.82, "点一下开始", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
         fontSize: "26px",
         color: "#fff3dd",
@@ -54,8 +64,8 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.tweens.add({
-      targets: [title, hint],
-      y: "+=8",
+      targets: hint,
+      y: "+=6",
       yoyo: true,
       duration: 900,
       repeat: -1,
@@ -68,6 +78,5 @@ export class MenuScene extends Phaser.Scene {
       this.cameras.main.fadeOut(220, 20, 12, 18);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("play"));
     });
-
   }
 }

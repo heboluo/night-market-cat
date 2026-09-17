@@ -41,6 +41,15 @@ export function startSound(): void {
   beep(480, 0.16, "triangle", 0.05);
 }
 
+export function hurtSound(): void {
+  beep(140, 0.16, "square", 0.05);
+}
+
+export function warnSound(): void {
+  beep(220, 0.12, "square", 0.04);
+  beep(330, 0.18, "triangle", 0.05);
+}
+
 export function closingSound(): void {
   beep(240, 0.2, "sine", 0.05);
   beep(160, 0.28, "triangle", 0.04);

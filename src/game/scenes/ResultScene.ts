@@ -1,6 +1,7 @@
 import Phaser from "phaser";
+import { ensureArt } from "../art/createSprites";
 import { startSound, unlockAudio } from "../audio/sfx";
-import { formatSize, type RoundResult } from "../types";
+import { formatRank, formatSize, type RoundResult } from "../types";
 
 export class ResultScene extends Phaser.Scene {
   private result!: RoundResult;
@@ -14,14 +15,20 @@ export class ResultScene extends Phaser.Scene {
   }
 
   create(): void {
+    ensureArt(this);
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("#140c18");
-    this.add.rectangle(width / 2, height / 2, width, height, 0x140c18);
+    this.cameras.main.setBackgroundColor("#16101c");
+    this.add.tileSprite(width / 2, height / 2, width, height, "px-ground");
+    const cat = this.add.sprite(width / 2, height * 0.2, "px-cat-0");
+    cat.setScale(3.4);
+    cat.play("cat-idle");
+
+    const title = this.result.ateArch ? "牌坊进肚了" : this.result.reason === "hungry" ? "饿得走不动了" : this.result.reason === "swept" ? "被收摊车撵走了" : "夜市打烊了";
 
     this.add
-      .text(width / 2, height * 0.22, "夜市打烊了", {
+      .text(width / 2, height * 0.34, title, {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "56px",
+        fontSize: "46px",
         color: "#ffe7c2",
         stroke: "#8b3a1e",
         strokeThickness: 6,
@@ -29,25 +36,26 @@ export class ResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const lines = [
+      `评价：${formatRank(this.result)}`,
       `今晚吞下 ${this.result.eaten} 样东西`,
       `体型：${formatSize(this.result.radius)}`,
       `最大的一口：${this.result.biggestName}`,
     ];
 
     this.add
-      .text(width / 2, height * 0.46, lines.join("\n"), {
+      .text(width / 2, height * 0.54, lines.join("\n"), {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "26px",
+        fontSize: "22px",
         color: "#ffd7a0",
         align: "center",
-        lineSpacing: 14,
+        lineSpacing: 12,
       })
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.74, "再来一局", {
+      .text(width / 2, height * 0.8, "再来一局", {
         fontFamily: "Microsoft YaHei, PingFang SC, sans-serif",
-        fontSize: "28px",
+        fontSize: "26px",
         color: "#fff3dd",
       })
       .setOrigin(0.5);

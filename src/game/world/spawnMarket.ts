@@ -12,7 +12,7 @@ function jitter(rng: Phaser.Math.RandomDataGenerator, base: number, amount: numb
 }
 
 function make(scene: Phaser.Scene, x: number, y: number, def: ItemDef, rng: Phaser.Math.RandomDataGenerator): Edible {
-  const radius = jitter(rng, def.radius, 0.12);
+  const radius = jitter(rng, def.radius, 0.1);
   return new Edible(scene, x, y, def, radius);
 }
 
@@ -20,70 +20,53 @@ export function spawnMarket(scene: Phaser.Scene, rng: Phaser.Math.RandomDataGene
   const items: Edible[] = [];
   const pad = 280;
   const spacing = 520;
+  const center = WORLD_SIZE / 2;
+
+  for (let i = 0; i < 8; i++) {
+    const ang = (Math.PI * 2 * i) / 8;
+    const dist = rng.between(70, 120);
+    items.push(make(scene, center + Math.cos(ang) * dist, center + Math.sin(ang) * dist, pick(rng, SNACKS), rng));
+  }
+  for (let i = 0; i < 6; i++) {
+    const ang = rng.realInRange(0, Math.PI * 2);
+    const dist = rng.between(140, 220);
+    items.push(make(scene, center + Math.cos(ang) * dist, center + Math.sin(ang) * dist, WARES[1], rng));
+  }
 
   for (let x = pad; x < WORLD_SIZE - pad; x += spacing) {
     for (let y = pad; y < WORLD_SIZE - pad; y += spacing) {
-      if (Math.abs(x - WORLD_SIZE / 2) < 180 && Math.abs(y - WORLD_SIZE / 2) < 180) continue;
+      if (Math.abs(x - center) < 200 && Math.abs(y - center) < 200) continue;
       const stall = make(scene, x + rng.between(-40, 40), y + rng.between(-40, 40), pick(rng, STALLS), rng);
       items.push(stall);
 
-      const around = rng.between(5, 8);
+      const around = rng.between(3, 5);
       for (let i = 0; i < around; i++) {
         const ang = rng.realInRange(0, Math.PI * 2);
-        const dist = rng.between(70, 170);
-        const snack = make(scene, stall.x + Math.cos(ang) * dist, stall.y + Math.sin(ang) * dist, pick(rng, SNACKS), rng);
-        items.push(snack);
+        const dist = rng.between(80, 180);
+        items.push(make(scene, stall.x + Math.cos(ang) * dist, stall.y + Math.sin(ang) * dist, pick(rng, SNACKS), rng));
       }
 
-      if (rng.frac() > 0.35) {
+      if (rng.frac() > 0.4) {
         items.push(make(scene, stall.x + rng.between(-90, 90), stall.y + rng.between(80, 140), pick(rng, WARES), rng));
       }
-      if (rng.frac() > 0.72) {
-        items.push(make(scene, stall.x + rng.between(-160, 160), stall.y + rng.between(-160, 160), pick(rng, VEHICLES), rng));
+      if (rng.frac() > 0.55) {
+        const bike = make(scene, stall.x + rng.between(-180, 180), stall.y + rng.between(-40, 40), pick(rng, VEHICLES), rng);
+        bike.vx = (rng.frac() < 0.5 ? -1 : 1) * rng.between(90, 140);
+        items.push(bike);
       }
     }
   }
 
-  items.push(new Edible(scene, WORLD_SIZE / 2, 520, LANDMARKS[0], LANDMARKS[0].radius));
-
-  for (let i = 0; i < 40; i++) {
-    items.push(
-      make(
-        scene,
-        rng.between(pad, WORLD_SIZE - pad),
-        rng.between(pad, WORLD_SIZE - pad),
-        pick(rng, SNACKS),
-        rng,
-      ),
-    );
-  }
-
+  items.push(new Edible(scene, center, 520, LANDMARKS[0], LANDMARKS[0].radius));
   return items;
 }
 
 export function paintGround(scene: Phaser.Scene): void {
-  const g = scene.add.graphics().setDepth(0);
-  g.fillStyle(0x140c18, 1);
-  g.fillRect(0, 0, WORLD_SIZE, WORLD_SIZE);
-
-  g.fillStyle(0x24161f, 1);
+  scene.add.tileSprite(0, 0, WORLD_SIZE, WORLD_SIZE, "px-ground").setOrigin(0, 0).setDepth(0);
   for (let x = 180; x < WORLD_SIZE; x += 520) {
-    g.fillRect(x - 70, 0, 140, WORLD_SIZE);
+    scene.add.tileSprite(x, WORLD_SIZE / 2, 128, WORLD_SIZE, "px-road").setDepth(1);
   }
   for (let y = 180; y < WORLD_SIZE; y += 520) {
-    g.fillRect(0, y - 70, WORLD_SIZE, 140);
-  }
-
-  g.lineStyle(3, 0x3a2430, 0.5);
-  for (let i = 240; i < WORLD_SIZE; i += 80) {
-    g.lineBetween(i, 0, i, WORLD_SIZE);
-    g.lineBetween(0, i, WORLD_SIZE, i);
-  }
-
-  for (let i = 0; i < 90; i++) {
-    const x = Phaser.Math.Between(40, WORLD_SIZE - 40);
-    const y = Phaser.Math.Between(40, WORLD_SIZE - 40);
-    g.fillStyle(0xffb35a, Phaser.Math.FloatBetween(0.04, 0.12));
-    g.fillCircle(x, y, Phaser.Math.Between(6, 18));
+    scene.add.tileSprite(WORLD_SIZE / 2, y, WORLD_SIZE, 128, "px-road").setDepth(1);
   }
 }

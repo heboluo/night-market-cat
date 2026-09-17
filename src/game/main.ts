@@ -14,8 +14,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     height: 720,
   },
   render: {
-    antialias: true,
-    roundPixels: false,
+    pixelArt: true,
+    antialias: false,
+    roundPixels: true,
   },
   scene: [MenuScene, PlayScene, ResultScene],
 };
